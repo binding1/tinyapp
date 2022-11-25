@@ -3,7 +3,7 @@ const app = express();
 const PORT = 8080;
 
 function generateRandomString() {
-  let randomUrl;
+  let randomUrl = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
   for (let i = 0; i < 6; i++) {
     randomUrl += chars.charAt(Math.floor(Math.random() * chars.length));
@@ -27,8 +27,19 @@ app.get("/urls", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
+  //console.log(req.body); // Log the POST request body to the console
+  const shortUrl = generateRandomString();
+  let newLongURL = '';
+  if (!req.body.longURL.includes('http://')) {
+    newLongURL = 'http://' + req.body.longURL;
+  }
+  urlDatabase[shortUrl] = newLongURL;
+  res.redirect(`urls/${shortUrl}`);
+});
+
+app.get("/u/:id", (req, res) => {
+  const longURL = urlDatabase[req.params.id];
+  res.redirect(longURL);
 });
 
 app.get("/urls/new", (req, res) => {
