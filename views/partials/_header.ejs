@@ -13,9 +13,22 @@
       <span class="navbar-toggler-icon"></span>
     </button>
     <div class="collapse navbar-collapse" id="navbarNavAltMarkup">
-      <div class="navbar-nav">
+      <div class="navbar-nav" style="width: 100%; justify-content: space-between;">
         <a class="nav-item nav-link" href="/urls">My URLs</a>
         <a class="nav-item nav-link" href="/urls/new">Create New URL</a>
+
+          <% if (username) { %>
+            <p style="margin: auto; margin-right: 1em;">Hi <%= username %>!</p>
+            <form class="form-inline" method="POST"action="/logout">
+            <button>Logout</button>
+          </form>
+            <% } else { %>
+              <p style="margin: auto; margin-right: 1em;"></p>
+              <form class="form-inline"  method="POST" action="/login">
+                <input type="text"  name="username" placeholder="Username">
+                <button type="submit">Sign In</button>
+          </form>
+        <% } %>
       </div>
     </div>
   </nav>
