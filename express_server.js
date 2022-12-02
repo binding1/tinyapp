@@ -60,11 +60,23 @@ const checkIfExistingEmail = function(newEmail) {
 ----------------------------------- Routing -----------------------------------
 */
 
+// route for my urls page
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_index", templateVars);
 });
 
+app.post("/urls", (req, res) => {
+  const shortUrl = generateRandomString();
+  let newLongURL = req.body.longURL;
+  if (!req.body.longURL.includes('http://')) {
+    newLongURL = 'http://' + req.body.longURL;
+  }
+  urlDatabase[shortUrl] = newLongURL;
+  res.redirect(`urls/${shortUrl}`);
+});
+
+// route for registering for an account
 app.get("/register", (req, res) => {
   const templateVars = { user: users[req.cookies["user_id"]] };
   res.render("register", templateVars);
@@ -91,6 +103,7 @@ app.post("/register", (req, res) => {
   }
 });
 
+// route for login page
 app.get("/login", (req, res) => {
   const templateVars = { user: users[req.cookies["id"]] };
   res.render("login", templateVars);
@@ -117,20 +130,11 @@ app.post("/login", (req, res) => {
   }
 });
 
-app.post("/urls", (req, res) => {
-  const shortUrl = generateRandomString();
-  let newLongURL = req.body.longURL;
-  if (!req.body.longURL.includes('http://')) {
-    newLongURL = 'http://' + req.body.longURL;
-  }
-  urlDatabase[shortUrl] = newLongURL;
-  res.redirect(`urls/${shortUrl}`);
+// route for url details
+app.get("/urls/:id", (req, res) => {
+  const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]]  };
+  res.render("urls_show", templateVars);
 });
-
-app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
-  res.redirect("/login");
-})
 
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
@@ -139,38 +143,31 @@ app.post("/urls/:id", (req, res) => {
   res.redirect("/urls", templateVars);
 });
 
+// route for logout button
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
+  res.redirect("/login");
+})
+
+// route for deleting existing url
 app.post("/urls/:id/delete", (req, res) => {
   delete urlDatabase[req.params.id];
   res.redirect("/urls");
 });
 
+// route for editing url
 app.get("/u/:id", (req, res) => {
   const longURL = urlDatabase[req.params.id];
   res.redirect(longURL);
 });
 
+// route for new url
 app.get("/urls/new", (req, res) => {
   const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_new", templateVars);
 });
 
-app.get("/urls/:id", (req, res) => {
-  const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]]  };
-  res.render("urls_show", templateVars);
-});
-
-// app.get("/", (req, res) => {
-//   res.redirect('/urls');
-// });
-
-// app.get("/urls.json", (req, res) => {
-//   res.json(urlDatabase);
-// });
-
-// app.get("/hello", (req, res) => {
-//   res.send("<html><body>Hello <b>World</b></body></html>\n");
-// });
-
+// server listening on terminal
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
