@@ -1,3 +1,7 @@
+/*
+----------------------------------- Setup -----------------------------------
+*/
+
 const express = require("express");
 const app = express();
 const PORT = 8080;
@@ -6,14 +10,13 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
-const generateRandomString = function() {
-  let randomUrl = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-  for (let i = 0; i < 6; i++) {
-    randomUrl += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
+/*
+----------------------------------- Variables -----------------------------------
+*/
 
-  return randomUrl;
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
 };
 
 const users = {
@@ -29,22 +32,33 @@ const users = {
   },
 };
 
-const checkIfExistingEmailRegistration = function(newEmail) {
-  let returnValue = false;
+/*
+----------------------------------- Helper Functions -----------------------------------
+*/
+
+const generateRandomString = function() {
+  let randomUrl = '';
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
+  for (let i = 0; i < 6; i++) {
+    randomUrl += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+
+  return randomUrl;
+};
+
+const checkIfExistingEmail = function(newEmail) {
+  let returnValue = null;
   Object.keys(users).map(userId => {
     if (users[userId].email === newEmail) {
-      returnValue = true;
+      returnValue = users[userId];
     }
   });
   return returnValue;
 };
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
-};
-
-//Routing
+/*
+----------------------------------- Routing -----------------------------------
+*/
 
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
@@ -58,7 +72,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   if (req.body.email && req.body.password) {
-    if (checkIfExistingEmailRegistration(req.body.email)) {
+    if (checkIfExistingEmail(req.body.email)) {
       res.statusCode = 400;
       res.send('<h1>400 Bad Request!</h1> <h3>This email is already registered.</h3>')
     } else {
@@ -78,13 +92,29 @@ app.post("/register", (req, res) => {
 });
 
 app.get("/login", (req, res) => {
-  const templateVars = { user: users[req.cookies["user_id"]] };
+  const templateVars = { user: users[req.cookies["id"]] };
   res.render("login", templateVars);
 });
 
 app.post("/login", (req, res) => {
-  res.cookie('user', users[req.cookies["user_id"]]);
-  res.redirect("/urls");
+  if (req.body.email && req.body.password) {
+    if (!checkIfExistingEmail(req.body.email)) {
+      res.statusCode = 403;
+      res.send("<h1>403 Forbidden!</h1> <h3>This email isn't registered. Please register for a new account.</h3>")
+    } else {
+      const userCreds = checkIfExistingEmail(req.body.email)
+      if (req.body.password !== userCreds.password) {
+        res.statusCode = 403
+        res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>")
+      } else {
+        res.cookie('user_id', userCreds["id"]);
+        res.redirect("/urls");
+      }
+    }
+  } else {
+    res.statusCode = 403;
+    res.send('<h1>403 Bad Request!</h1> <h3>Please fill out email and password.</h3>')
+  }
 });
 
 app.post("/urls", (req, res) => {
@@ -99,12 +129,12 @@ app.post("/urls", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie('user_id');
-  res.redirect("/urls");
+  res.redirect("/login");
 })
 
 app.post("/urls/:id", (req, res) => {
   urlDatabase[req.params.id] = req.body.longURL;
-  const templateVars = { id: req.params.id, longURL: req.params.longURL };
+  const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
   res.render("urls_show", templateVars);
   res.redirect("/urls", templateVars);
 });

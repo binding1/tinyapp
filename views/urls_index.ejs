@@ -38,11 +38,11 @@
               <td><a href="<%= urls[id] %>"><%= urls[id] %></a></td>
               <td>
                 <form method="POST" action="/urls/<%= id %>">
-                <button type="submit" classname="btn btn-outline-danger">Edit</button>
+                <button type="submit" class="btn btn-outline-primary">Edit</button>
               </td>
               <td>                
                 <form method="POST" action="/urls/<%= id %>/delete">
-                <button type="submit" classname="btn btn-outline-danger">Delete</button> <!-- supposed to be stylized button in Bootstrap but not working -->
+                <button type="submit" class="btn btn-outline-danger">Delete</button>
               </form>
             </td>
             </tr>
