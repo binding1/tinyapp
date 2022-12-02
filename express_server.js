@@ -6,7 +6,7 @@ app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
-function generateRandomString() {
+const generateRandomString = function() {
   let randomUrl = '';
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
   for (let i = 0; i < 6; i++) {
@@ -14,11 +14,6 @@ function generateRandomString() {
   }
 
   return randomUrl;
-};
-
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
 };
 
 const users = {
@@ -34,6 +29,23 @@ const users = {
   },
 };
 
+const checkIfExistingEmailRegistration = function(newEmail) {
+  let returnValue = false;
+  Object.keys(users).map(userId => {
+    if (users[userId].email === newEmail) {
+      returnValue = true;
+    }
+  });
+  return returnValue;
+};
+
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com"
+};
+
+
+
 app.get("/urls", (req, res) => {
   const templateVars = { urls: urlDatabase, user: users[req.cookies["user_id"]] };
   res.render("urls_index", templateVars);
@@ -46,8 +58,15 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   if (!req.body.email || !req.body.password) {
-    res.send('Please fill out email and password.</h2>')
+    res.statusCode = 400;
+    res.send('<h1>400 Bad Request!</h1> <h3>Please fill out email and password.</h3>')
   }
+
+  if (checkIfExistingEmailRegistration(req.body.email)) {
+    res.statusCode = 400;
+    res.send('<h1>400 Bad Request!</h1> <h3>This email is already registered.</h3>')
+  }
+
   const newUserId = generateRandomString();
   users[newUserId] = {
     id: newUserId,
