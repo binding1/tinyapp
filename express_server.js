@@ -6,7 +6,7 @@ const express = require("express");
 const app = express();
 const PORT = 8080;
 const cookieParser = require('cookie-parser');
-const e = require("express");
+const bcrypt = require("bcryptjs");
 app.use(cookieParser());
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
@@ -40,10 +40,8 @@ const users = {
     id: "user2RandomID",
     email: "user2@example.com",
     password: "dishwasher-funk",
-  },
+  }
 };
-
-
 
 /*
 ----------------------------------- Helper Functions -----------------------------------
@@ -90,7 +88,6 @@ app.get("/urls", (req, res) => {
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in to show your urls.</h3>");
   } else {
     const userUrls = retrieveUrls(req.cookies['user_id']);
-    console.log(userUrls);
     const templateVars = { urls: userUrls, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
     res.render("urls_index", templateVars);
   }
@@ -143,7 +140,7 @@ app.post("/register", (req, res) => {
       users[newUserId] = {
         id: newUserId,
         email: req.body.email,
-        password: req.body.password
+        password: bcrypt.hashSync(req.body.password, 10)
       };
       res.cookie('user_id', users[newUserId]['id']);
       res.redirect("/urls");
@@ -171,9 +168,9 @@ app.post("/login", (req, res) => {
       res.send("<h1>403 Forbidden!</h1> <h3>This email isn't registered. Please register for a new account.</h3>")
     } else {
       const userCreds = checkIfExistingEmail(req.body.email)
-      if (req.body.password !== userCreds.password) {
-        res.statusCode = 403
-        res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>")
+      if (!bcrypt.compareSync(req.body.password, userCreds["password"])) {
+        res.statusCode = 403;
+        res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>");
       } else {
         res.cookie('user_id', userCreds["id"]);
         res.redirect("/urls");
