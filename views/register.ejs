@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css"
+      integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS"
+      crossorigin="anonymous"
+    />
+
+    <title>Tinyapp - Register</title>
+  </head>
+
+  <body>
+    <%- include('partials/_header') %>
+    <div style="margin: auto; margin-top: 2em; width: 400px; padding: 2em; border-style: solid; border-width: 1px; border-color: #dddddd; border-radius: 2%; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);">
+      <h3 style="margin-bottom: 1em;">Create an Account</h3>
+      <form class="form-group" action="/register" method="POST">
+        <label for="email">Email</label>
+        <input
+          class="form-control"
+          type="email"
+          name="email"
+          placeholder="Email"
+          style="margin-bottom: 2em;"
+          />
+        <label for="password">Password</label>
+        <input
+          class="form-control"
+          type="password"
+          name="password"
+          placeholder="Password"            
+          style="margin-bottom: 2em;"
+          />
+        <button type="submit" class="btn btn-primary" style="width: 100%">Submit</button>
+      </form>
+    </div>
+
+  </body>
+</html>
