@@ -15,14 +15,14 @@
       crossorigin="anonymous"
     />
 
-    <title>Tinyapp - Register</title>
+    <title>Tinyapp - Login</title>
   </head>
 
   <body>
     <%- include('partials/_header') %>
     <div style="margin: auto; margin-top: 2em; width: 400px; padding: 2em; border-style: solid; border-width: 1px; border-color: #dddddd; border-radius: 2%; box-shadow: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);">
-      <h3 style="margin-bottom: 1em;">Create an Account</h3>
-      <form class="form-group" action="/register" method="POST">
+      <h3 style="margin-bottom: 1em;">Log in to TinyApp</h3>
+      <form class="form-group" action="/login" method="POST">
         <label for="email">Email</label>
         <input
           class="form-control"
@@ -39,7 +39,7 @@
           placeholder="Password"            
           style="margin-bottom: 2em;"
           />
-        <button type="submit" class="btn btn-primary" style="width: 100%">Submit</button>
+        <button type="submit" class="btn btn-primary" style="width: 100%">Login</button>
       </form>
     </div>
   </body>
