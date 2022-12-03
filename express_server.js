@@ -58,7 +58,7 @@ const { generateRandomString, getUserByEmail, retrieveUrls } = require('./helper
 
 // route for initial / home page
 app.get("/", (req, res) => {
-  if (!req.session.user_id) {;
+  if (!req.session.user_id) {
     res.redirect("/login");
   } else {
     res.redirect("/urls");
@@ -86,10 +86,10 @@ app.post("/urls", (req, res) => {
     if (!req.body.longURL.includes('http://')) {
       newLongURL = 'http://' + req.body.longURL;
     }
-      urlDatabase[newShortURL] = {
-        longURL: newLongURL,
-        userId: req.session.user_id
-    }
+    urlDatabase[newShortURL] = {
+      longURL: newLongURL,
+      userId: req.session.user_id
+    };
     res.redirect(`urls/${newShortURL}`);
   }
 });
@@ -106,7 +106,7 @@ app.get("/urls/new", (req, res) => {
 
 // route for registering for an account
 app.get("/register", (req, res) => {
-  if (!req.session.user_id){
+  if (!req.session.user_id) {
     const templateVars = { user: users[req.session.user_id] };
     res.render("register", templateVars);
   } else {
@@ -118,7 +118,7 @@ app.post("/register", (req, res) => {
   if (req.body.email && req.body.password) {
     if (getUserByEmail(req.body.email, users)) {
       res.statusCode = 400;
-      res.send('<h1>400 Bad Request!</h1> <h3>This email is already registered.</h3>')
+      res.send('<h1>400 Bad Request!</h1> <h3>This email is already registered.</h3>');
     } else {
       const newUserId = generateRandomString();
       users[newUserId] = {
@@ -131,13 +131,13 @@ app.post("/register", (req, res) => {
     }
   } else {
     res.statusCode = 400;
-    res.send('<h1>400 Bad Request!</h1> <h3>Please fill out email and password.</h3>')
+    res.send('<h1>400 Bad Request!</h1> <h3>Please fill out email and password.</h3>');
   }
 });
 
 // route for login page
 app.get("/login", (req, res) => {
-  if (!req.session.user_id){
+  if (!req.session.user_id) {
     const templateVars = { user: users[req.session.user_id] };
     res.render("login", templateVars);
   } else {
@@ -149,9 +149,9 @@ app.post("/login", (req, res) => {
   if (req.body.email && req.body.password) {
     if (!getUserByEmail(req.body.email, users)) {
       res.statusCode = 403;
-      res.send("<h1>403 Forbidden!</h1> <h3>This email isn't registered. Please register for a new account.</h3>")
+      res.send("<h1>403 Forbidden!</h1> <h3>This email isn't registered. Please register for a new account.</h3>");
     } else {
-      const userCreds = getUserByEmail(req.body.email, users)
+      const userCreds = getUserByEmail(req.body.email, users);
       if (!bcrypt.compareSync(req.body.password, userCreds["password"])) {
         res.statusCode = 403;
         res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>");
@@ -162,7 +162,7 @@ app.post("/login", (req, res) => {
     }
   } else {
     res.statusCode = 403;
-    res.send('<h1>403 Bad Request!</h1> <h3>Please fill out email and password.</h3>')
+    res.send('<h1>403 Bad Request!</h1> <h3>Please fill out email and password.</h3>');
   }
 });
 
@@ -175,7 +175,7 @@ app.post("/logout", (req, res) => {
 
 // route for redirecting to long url
 app.get("/u/:id", (req, res) => {
-  if (!urlDatabase[req.params.id]){
+  if (!urlDatabase[req.params.id]) {
     res.send('This URL does not exist. ');
   } else {
     const longURL = urlDatabase[req.params.id]['longURL'];
@@ -185,12 +185,12 @@ app.get("/u/:id", (req, res) => {
 
 // route for url details
 app.get("/urls/:id", (req, res) => {
-  if(!req.session.user_id) {
+  if (!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in to show your urls.</h3>");
   }
 
-  if (req.session.user_id !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
@@ -201,17 +201,17 @@ app.get("/urls/:id", (req, res) => {
 
 // route for url details and edit
 app.post("/urls/:id", (req, res) => {
-  if(!req.session.user_id) {
+  if (!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in.</h3>");
   }
   
-  if (!urlDatabase[req.params.id]){
+  if (!urlDatabase[req.params.id]) {
     res.statusCode = 404;
     res.send("<h1>404 Not Found!</h1> <h3>This URL does not exist.</h3>");
-  } 
+  }
 
-  if (req.session.user_id !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
@@ -220,23 +220,23 @@ app.post("/urls/:id", (req, res) => {
       newLongURL = 'http://' + req.body.longURL;
     }
     urlDatabase[req.params.id]['longURL'] = newLongURL;
-    res.redirect("/urls")
+    res.redirect("/urls");
   }
 });
 
 // route for deleting existing url
 app.post("/urls/:id/delete", (req, res) => {
-  if(!req.session.user_id) {
+  if (!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in.</h3>");
   }
   
-  if (!urlDatabase[req.params.id]){
+  if (!urlDatabase[req.params.id]) {
     res.statusCode = 404;
     res.send("<h1>404 Not Found!</h1> <h3>This URL does not exist.</h3>");
-  } 
+  }
 
-  if (req.session.user_id !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
