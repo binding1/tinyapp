@@ -47,38 +47,10 @@ const users = {
 };
 
 /*
------------------------------------ Helper Functions -----------------------------------
+----------------------------------- Import Helper Functions -----------------------------------
 */
 
-const generateRandomString = function() {
-  let randomUrl = '';
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890';
-  for (let i = 0; i < 6; i++) {
-    randomUrl += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  return randomUrl;
-};
-
-const checkIfExistingEmail = function(newEmail) {
-  let returnValue = null;
-  Object.keys(users).map(userId => {
-    if (users[userId].email === newEmail) {
-      returnValue = users[userId];
-    }
-  });
-  return returnValue;
-};
-
-const retrieveUrls = function(id) {
-  const userUrlDatabase = {};
-  for (const shortURL in urlDatabase) {
-    if (urlDatabase[shortURL]['userId'] === id) {
-      userUrlDatabase[shortURL] = urlDatabase[shortURL]['longURL'];
-    }
-  }
-  return userUrlDatabase;
-};
+const { generateRandomString, getUserByEmail, retrieveUrls } = require('./helpers');
 
 /*
 ----------------------------------- Routing -----------------------------------
@@ -86,12 +58,11 @@ const retrieveUrls = function(id) {
 
 // route for my urls page
 app.get("/urls", (req, res) => {
-  console.log(req.session.user_id);
   if (!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in to show your urls.</h3>");
   } else {
-    const userUrls = retrieveUrls(req.session.user_id);
+    const userUrls = retrieveUrls(req.session.user_id, urlDatabase);
     const templateVars = { urls: userUrls, longURL: req.params.longURL, user: users[req.session.user_id] };
     res.render("urls_index", templateVars);
   }
@@ -136,7 +107,7 @@ app.get("/register", (req, res) => {
 
 app.post("/register", (req, res) => {
   if (req.body.email && req.body.password) {
-    if (checkIfExistingEmail(req.body.email)) {
+    if (getUserByEmail(req.body.email, users)) {
       res.statusCode = 400;
       res.send('<h1>400 Bad Request!</h1> <h3>This email is already registered.</h3>')
     } else {
@@ -167,11 +138,11 @@ app.get("/login", (req, res) => {
 
 app.post("/login", (req, res) => {
   if (req.body.email && req.body.password) {
-    if (!checkIfExistingEmail(req.body.email)) {
+    if (!getUserByEmail(req.body.email, users)) {
       res.statusCode = 403;
       res.send("<h1>403 Forbidden!</h1> <h3>This email isn't registered. Please register for a new account.</h3>")
     } else {
-      const userCreds = checkIfExistingEmail(req.body.email)
+      const userCreds = getUserByEmail(req.body.email, users)
       if (!bcrypt.compareSync(req.body.password, userCreds["password"])) {
         res.statusCode = 403;
         res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>");
