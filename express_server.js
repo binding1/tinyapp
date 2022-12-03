@@ -56,6 +56,15 @@ const { generateRandomString, getUserByEmail, retrieveUrls } = require('./helper
 ----------------------------------- Routing -----------------------------------
 */
 
+// route for initial / home page
+app.get("/", (req, res) => {
+  if (!req.session.user_id) {;
+    res.redirect("/login");
+  } else {
+    res.redirect("/urls");
+  }
+});
+
 // route for my urls page
 app.get("/urls", (req, res) => {
   if (!req.session.user_id) {
@@ -157,6 +166,23 @@ app.post("/login", (req, res) => {
   }
 });
 
+// route for logout button
+app.post("/logout", (req, res) => {
+  res.clearCookie('session');
+  res.clearCookie('session.sig');
+  res.redirect("/login");
+});
+
+// route for redirecting to long url
+app.get("/u/:id", (req, res) => {
+  if (!urlDatabase[req.params.id]){
+    res.send('This URL does not exist. ');
+  } else {
+    const longURL = urlDatabase[req.params.id]['longURL'];
+    res.redirect(longURL);
+  }
+});
+
 // route for url details
 app.get("/urls/:id", (req, res) => {
   if(!req.session.user_id) {
@@ -168,11 +194,12 @@ app.get("/urls/:id", (req, res) => {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
-    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.session.user_id]  };
+    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id]['longURL'], user: users[req.session.user_id]  };
     res.render("urls_show", templateVars);
   }
 });
 
+// route for url details and edit
 app.post("/urls/:id", (req, res) => {
   if(!req.session.user_id) {
     res.statusCode = 401;
@@ -188,26 +215,12 @@ app.post("/urls/:id", (req, res) => {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
-     urlDatabase[req.params.id]['longURL'] = req.body.longURL;
-    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.session.user_id] };
-    res.render("urls_show", templateVars)
-  }
-});
-
-// route for logout button
-app.post("/logout", (req, res) => {
-  res.clearCookie('session');
-  res.clearCookie('session.sig');
-  res.redirect("/login");
-});
-
-// route for editing url
-app.get("/u/:id", (req, res) => {
-  if (!urlDatabase[req.params.id]){
-    res.send('This URL does not exist. ');
-  } else {
-    const longURL = urlDatabase[req.params.id]['longURL'];
-    res.redirect(longURL);
+    let newLongURL = req.body.longURL;
+    if (!req.body.longURL.includes('http://')) {
+      newLongURL = 'http://' + req.body.longURL;
+    }
+    urlDatabase[req.params.id]['longURL'] = newLongURL;
+    res.redirect("/urls")
   }
 });
 
@@ -227,10 +240,11 @@ app.post("/urls/:id/delete", (req, res) => {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
-  delete urlDatabase[id];
-  res.redirect("/urls");
+    delete urlDatabase[req.params.id];
+    res.redirect("/urls");
   }
 });
+
 
 // server listening on terminal
 app.listen(PORT, () => {
