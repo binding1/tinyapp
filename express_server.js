@@ -5,9 +5,12 @@
 const express = require("express");
 const app = express();
 const PORT = 8080;
-const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const bcrypt = require("bcryptjs");
-app.use(cookieParser());
+app.use(cookieSession({
+  name: 'session',
+  keys: ['what-is-this-key']
+}));
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
 
@@ -83,18 +86,19 @@ const retrieveUrls = function(id) {
 
 // route for my urls page
 app.get("/urls", (req, res) => {
-  if (!req.cookies['user_id']) {
+  console.log(req.session.user_id);
+  if (!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in to show your urls.</h3>");
   } else {
-    const userUrls = retrieveUrls(req.cookies['user_id']);
-    const templateVars = { urls: userUrls, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
+    const userUrls = retrieveUrls(req.session.user_id);
+    const templateVars = { urls: userUrls, longURL: req.params.longURL, user: users[req.session.user_id] };
     res.render("urls_index", templateVars);
   }
 });
 
 app.post("/urls", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.send('Please log in to shorten URLs. ');
   } else {
     const newShortURL = generateRandomString();
@@ -104,7 +108,7 @@ app.post("/urls", (req, res) => {
     }
       urlDatabase[newShortURL] = {
         longURL: newLongURL,
-        userId: req.cookies['user_id']
+        userId: req.session.user_id
     }
     res.redirect(`urls/${newShortURL}`);
   }
@@ -112,18 +116,18 @@ app.post("/urls", (req, res) => {
 
 // route for new url
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies['user_id']) {
+  if (!req.session.user_id) {
     res.redirect("/login");
   } else {
-    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
+    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.session.user_id] };
     res.render("urls_new", templateVars);
   }
 });
 
 // route for registering for an account
 app.get("/register", (req, res) => {
-  if (!req.cookies['user_id']){
-    const templateVars = { user: users[req.cookies['user_id']] };
+  if (!req.session.user_id){
+    const templateVars = { user: users[req.session.user_id] };
     res.render("register", templateVars);
   } else {
     res.redirect("/urls");
@@ -142,7 +146,7 @@ app.post("/register", (req, res) => {
         email: req.body.email,
         password: bcrypt.hashSync(req.body.password, 10)
       };
-      res.cookie('user_id', users[newUserId]['id']);
+      req.session.user_id = users[newUserId]['id'];
       res.redirect("/urls");
     }
   } else {
@@ -153,8 +157,8 @@ app.post("/register", (req, res) => {
 
 // route for login page
 app.get("/login", (req, res) => {
-  if (!req.cookies['user_id']){
-    const templateVars = { user: users[req.cookies["id"]] };
+  if (!req.session.user_id){
+    const templateVars = { user: users[req.session.user_id] };
     res.render("login", templateVars);
   } else {
     res.redirect("/urls");
@@ -172,7 +176,7 @@ app.post("/login", (req, res) => {
         res.statusCode = 403;
         res.send("<h1>403 Forbidden!</h1> <h3>Invalid Credentials.</h3>");
       } else {
-        res.cookie('user_id', userCreds["id"]);
+        req.session.user_id = userCreds["id"];
         res.redirect("/urls");
       }
     }
@@ -184,22 +188,22 @@ app.post("/login", (req, res) => {
 
 // route for url details
 app.get("/urls/:id", (req, res) => {
-  if(!req.cookies["user_id"]) {
+  if(!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in to show your urls.</h3>");
   }
 
-  if (req.cookies["user_id"] !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId){
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
-    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]]  };
+    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.session.user_id]  };
     res.render("urls_show", templateVars);
   }
 });
 
 app.post("/urls/:id", (req, res) => {
-  if(!req.cookies["user_id"]) {
+  if(!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in.</h3>");
   }
@@ -209,19 +213,20 @@ app.post("/urls/:id", (req, res) => {
     res.send("<h1>404 Not Found!</h1> <h3>This URL does not exist.</h3>");
   } 
 
-  if (req.cookies["user_id"] !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId){
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
      urlDatabase[req.params.id]['longURL'] = req.body.longURL;
-    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.cookies["user_id"]] };
+    const templateVars = { id: req.params.id, longURL: req.params.longURL, user: users[req.session.user_id] };
     res.render("urls_show", templateVars)
   }
 });
 
 // route for logout button
 app.post("/logout", (req, res) => {
-  res.clearCookie('user_id');
+  res.clearCookie('session');
+  res.clearCookie('session.sig');
   res.redirect("/login");
 });
 
@@ -237,7 +242,7 @@ app.get("/u/:id", (req, res) => {
 
 // route for deleting existing url
 app.post("/urls/:id/delete", (req, res) => {
-  if(!req.cookies["user_id"]) {
+  if(!req.session.user_id) {
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>Please log in.</h3>");
   }
@@ -247,7 +252,7 @@ app.post("/urls/:id/delete", (req, res) => {
     res.send("<h1>404 Not Found!</h1> <h3>This URL does not exist.</h3>");
   } 
 
-  if (req.cookies["user_id"] !== urlDatabase[req.params.id].userId){
+  if (req.session.user_id !== urlDatabase[req.params.id].userId){
     res.statusCode = 401;
     res.send("<h1>401 Unauthorized!</h1> <h3>You do not have access to this URL.</h3>");
   } else {
